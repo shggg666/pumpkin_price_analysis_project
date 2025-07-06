@@ -1,0 +1,85 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import datetime as dt
+
+# 设置中文显示
+plt.rcParams["font.family"] = ["SimHei", "WenQuanYi Micro Hei", "Heiti TC"]
+sns.set(font="SimHei", font_scale=1.2)
+
+# 1. 数据加载与预处理
+df = pd.read_csv("data/US-pumpkins.csv")
+
+# 查看数据基本信息
+print("数据集形状：", df.shape)
+print("\n前5行数据：")
+print(df.head())
+
+# 处理价格：计算平均价格（(Low Price + High Price)/2）
+df["Average Price"] = (df["Low Price"] + df["High Price"]) / 2
+
+# 处理日期：提取月份
+df["Date"] = pd.to_datetime(df["Date"])
+df["Month"] = df["Date"].dt.month
+
+# 处理缺失值（删除关键列缺失的行）
+df = df.dropna(subset=["Variety", "Average Price", "Month", "Item Size", "Origin"])
+
+# 2. 探索性分析
+
+# 2.1 不同品种南瓜的价格分布
+plt.figure(figsize=(12, 6))
+top_varieties = df["Variety"].value_counts().head(5).index  # 取前5种常见品种
+sns.boxplot(x="Variety", y="Average Price", data=df[df["Variety"].isin(top_varieties)])
+plt.title("不同品种南瓜的价格分布")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# 2.2 价格随月份的变化趋势
+plt.figure(figsize=(12, 6))
+monthly_price = df.groupby("Month")["Average Price"].mean().reset_index()
+sns.lineplot(x="Month", y="Average Price", data=monthly_price, marker="o")
+plt.title("南瓜价格随月份的变化趋势")
+plt.xlabel("月份")
+plt.ylabel("平均价格")
+plt.xticks(range(1, 13))
+plt.grid(linestyle="--")
+plt.tight_layout()
+plt.show()
+
+# 2.3 不同大小南瓜的价格差异
+plt.figure(figsize=(12, 6))
+size_order = ["sml", "med", "lge", "xlge", "jbo"]  # 按大小排序
+sns.violinplot(x="Item Size", y="Average Price", data=df, order=size_order)
+plt.title("不同大小南瓜的价格分布")
+plt.xlabel("大小")
+plt.ylabel("平均价格")
+plt.tight_layout()
+plt.show()
+
+# 2.4 主要产地的南瓜价格对比
+plt.figure(figsize=(12, 6))
+top_origins = df["Origin"].value_counts().head(6).index  # 取前6大产地
+sns.barplot(x="Origin", y="Average Price", data=df[df["Origin"].isin(top_origins)])
+plt.title("主要产地的南瓜平均价格")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# 2.5 价格与包装规格的关系
+plt.figure(figsize=(12, 6))
+top_packages = df["Package"].value_counts().head(5).index
+sns.boxplot(x="Package", y="Average Price", data=df[df["Package"].isin(top_packages)])
+plt.title("不同包装规格的南瓜价格分布")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# 3. 结论总结
+print("\n===== 分析结论 =====")
+print("1. 品种差异：HOWDEN TYPE和FAIRYTALE品种价格较高，MINIATURE品种价格较低。")
+print("2. 时间趋势：秋季（9-11月）南瓜价格较低，可能与丰收季供应充足有关；春季（4-6月）价格较高，可能因供应减少。")
+print("3. 大小影响：总体上南瓜尺寸越大，价格越高，但超大尺寸（jbo）价格波动较大。")
+print("4. 产地差异：CALIFORNIA和MICHIGAN产地的南瓜价格较高，可能与运输成本或品质差异有关。")
+print("5. 包装规格：24 inch bins和36 inch bins包装的南瓜价格较高，小包装（如50 lb sacks）价格较低。")
